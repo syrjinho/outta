@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Say It Here — MVP</title>
+<style>
+  :root{
+    --bg:#0b0d11; --panel:#141821; --panel2:#1a1f29; --text:#f4f5f7;
+    --muted:#9aa2b1; --line:#2a303b; --accent:#ff6b7a; --accent2:#b9b3ff;
+    --good:#8ed9a7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b0d11;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif}
+  button,input,textarea{font:inherit}
+  button{cursor:pointer}
+  .app{max-width:520px;min-height:100vh;margin:auto;padding:18px 16px 28px}
+  .screen{display:none}.screen.active{display:block}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .brand{font-size:27px;font-weight:800;letter-spacing:-1px}
+  .sub{color:var(--muted);font-size:14px;line-height:1.45}
+  .icon-btn{width:42px;height:42px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:14px}
+  .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .person{border:1px solid var(--line);background:linear-gradient(160deg,#171c25,#10141b);border-radius:20px;padding:12px;min-height:190px;text-align:left;color:var(--text)}
+  .avatar{width:86px;height:86px;border-radius:50%;margin:4px auto 12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(145deg,#555b6a,#222733);font-size:40px}
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  .person .name{font-weight:750;text-align:center}
+  .stress-mini{font-size:12px;color:var(--muted);text-align:center;margin-top:5px}
+  .add-card{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:190px;border:1px dashed #454b58;background:#10141b}
+  .plus{font-size:42px;font-weight:300;color:#c5cad4;line-height:1}
+  .primary{width:100%;border:0;border-radius:15px;background:#eeeaff;color:#12131a;font-weight:800;padding:15px 18px}
+  .secondary{width:100%;border:1px solid var(--line);border-radius:15px;background:var(--panel);color:var(--text);font-weight:700;padding:14px 18px}
+  .back{border:0;background:none;color:var(--muted);padding:8px 0}
+  .title{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:8px 0}
+  .center{text-align:center}
+  .hero-avatar{width:180px;height:180px;border-radius:50%;margin:18px auto 14px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 35% 25%,#777d8c,#252a35 62%,#11141a);font-size:90px;transition:transform .25s ease,filter .25s ease}
+  .hero-avatar img{width:100%;height:100%;object-fit:cover}
+  .stress-row{display:flex;justify-content:space-between;align-items:center;margin:16px 0 7px}
+  .stress-label{font-size:13px;color:var(--muted)}
+  .stress-number{font-size:18px;font-weight:850}
+  .bar{height:13px;background:#252b35;border-radius:999px;overflow:hidden;border:1px solid #303744}
+  .fill{height:100%;width:0%;background:linear-gradient(90deg,#8ed9a7,#ffd36a,#ff6b7a);transition:width .35s ease}
+  .face-label{margin:12px 0 18px;color:var(--muted);font-size:13px}
+  textarea{width:100%;min-height:105px;resize:vertical;background:#121720;color:var(--text);border:1px solid var(--line);border-radius:17px;padding:14px;outline:none}
+  textarea:focus,input:focus{border-color:#7770c9}
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .send{margin-top:10px}
+  .voice-status{min-height:20px;color:var(--muted);font-size:12px;margin-top:7px}
+  .history{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+  .bubble{background:#171c25;border:1px solid var(--line);padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.4}
+  .done-title{font-size:36px;font-weight:850;letter-spacing:-1.5px;margin-top:80px}
+  .pop{animation:pop .5s ease forwards}
+  @keyframes pop{
+    0%{transform:scale(1);filter:none}
+    45%{transform:scale(1.12) rotate(-3deg);filter:saturate(1.5)}
+    100%{transform:scale(.05);opacity:0}
+  }
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-end;justify-content:center;padding:12px}
+  .modal.open{display:flex}
+  .sheet{width:min(520px,100%);background:#151a23;border:1px solid var(--line);border-radius:24px 24px 16px 16px;padding:20px}
+  .sheet h2{margin:0 0 5px}
+  .sheet input{width:100%;background:#10141b;color:var(--text);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+  .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .file-label{display:flex;align-items:center;justify-content:center;min-height:48px;border:1px solid var(--line);border-radius:14px;background:#10141b;font-weight:700}
+  #photoInput{display:none}
+  .tiny{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.4}
+  @media (min-width:700px){.app{padding-top:32px}}
+</style>
+</head>
+<body>
+<main class="app">
+  <section id="home" class="screen active">
+    <div class="top">
+      <div>
+        <div class="brand">Say It Here.</div>
+        <div class="sub">Things you can't say out loud.</div>
+      </div>
+    </div>
+    <div id="people" class="cards"></div>
+  </section>
+
+  <section id="vent" class="screen">
+    <div class="top">
+      <button class="back" id="backHome">← Back</button>
+      <div class="sub" id="personHeader">MY BOSS</div>
+      <button class="icon-btn" id="resetBtn" aria-label="Reset session">↻</button>
+    </div>
+    <div class="center">
+      <div id="heroAvatar" class="hero-avatar" aria-label="Avatar">😐</div>
+      <div class="title" id="personName">My Boss</div>
+      <div class="stress-row">
+        <span class="stress-label">Boss's Stress Level</span>
+        <span class="stress-number"><span id="stress">0</span> / 100</span>
+      </div>
+      <div class="bar"><div id="fill" class="fill"></div></div>
+      <div class="face-label" id="faceLabel">Calm</div>
+    </div>
+
+    <textarea id="message" placeholder="Type what you really want to say..."></textarea>
+    <div class="actions">
+      <button class="secondary" id="speakBtn">🎙 Speak</button>
+      <button class="secondary" id="clearBtn">Clear</button>
+    </div>
+    <button class="primary send" id="sendBtn">Say it</button>
+    <div class="voice-status" id="voiceStatus" aria-live="polite"></div>
+    <div class="history" id="history"></div>
+  </section>
+
+  <section id="done" class="screen center">
+    <div class="done-title">You got it out.</div>
+    <p class="sub">Some things are better said here.</p>
+    <div style="margin-top:28px;display:grid;gap:10px">
+      <button class="primary" id="letGo">Let It Go</button>
+      <button class="secondary" id="replay">Vent Again</button>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2>Add Someone</h2>
+    <div class="sub">Create a target for your next vent.</div>
+    <input id="nameInput" maxlength="30" placeholder="Name (e.g. My Boss)" />
+    <div class="sheet-actions">
+      <label class="file-label" for="photoInput">📷 Add Photo</label>
+      <button class="secondary" id="avatarBtn">✨ AI Avatar</button>
+    </div>
+    <input id="photoInput" type="file" accept="image/*" />
+    <div id="avatarPreview" class="center" style="margin:14px 0;font-size:46px">😐</div>
+    <button class="primary" id="createPerson">Create</button>
+    <button class="back" id="closeModal" style="width:100%;margin-top:8px">Cancel</button>
+    <div class="tiny">MVP note: AI Avatar is represented by a generated-style placeholder here; connect your image-generation API later.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const screens = ["home","vent","done"];
+  let people = [
+    {id:1,name:"My Boss",emoji:"😐",photo:null,stress:0},
+    {id:2,name:"Ex",emoji:"😐",photo:null,stress:0}
+  ];
+  let current = null;
+  let photoData = null;
+  let generatedEmoji = "😐";
+
+  const faceStates = [
+    [0,"😐","Calm"], [20,"😕","Uncomfortable"], [40,"😒","Annoyed"],
+    [60,"😠","Angry"], [80,"😡","Furious"], [100,"😣","Overloaded"]
+  ];
+
+  function show(name){
+    screens.forEach(s => $(s).classList.toggle("active", s === name));
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function renderPeople(){
+    const root = $("people");
+    root.innerHTML = "";
+    people.forEach(p => {
+      const card = document.createElement("button");
+      card.className = "person";
+      card.type = "button";
+      card.innerHTML = `<div class="avatar">${p.photo ? `<img src="${p.photo}" alt="">` : p.emoji}</div>
+        <div class="name"></div><div class="stress-mini">Stress ${p.stress}</div>`;
+      card.querySelector(".name").textContent = p.name;
+      card.addEventListener("click", () => openPerson(p.id));
+      root.appendChild(card);
+    });
+    const add = document.createElement("button");
+    add.className = "person add-card";
+    add.type = "button";
+    add.innerHTML = `<div class="plus">＋</div><div style="margin-top:8px;font-weight:750">Add Someone</div>`;
+    add.addEventListener("click", () => $("modal").classList.add("open"));
+    root.appendChild(add);
+  }
+
+  function openPerson(id){
+    current = people.find(p => p.id === id);
+    if(!current) return;
+    $("personName").textContent = current.name;
+    $("personHeader").textContent = current.name.toUpperCase();
+    $("message").value = "";
+    $("history").innerHTML = "";
+    updateVisual();
+    show("vent");
+  }
+
+  function updateVisual(){
+    if(!current) return;
+    const s = Math.max(0,Math.min(100,current.stress));
+    $("stress").textContent = s;
+    $("fill").style.width = s + "%";
+    let state = faceStates[0];
+    for(const x of faceStates) if(s >= x[0]) state = x;
+    $("faceLabel").textContent = state[2];
+    const avatar = $("heroAvatar");
+    avatar.classList.remove("pop");
+    if(current.photo){
+      avatar.innerHTML = `<img src="${current.photo}" alt="${current.name}">`;
+    } else {
+      avatar.textContent = state[1];
+    }
+  }
+
+  function intensity(text){
+    const t = text.toLowerCase().trim();
+    if(!t) return 0;
+    let score = Math.ceil(Math.min(20, Math.max(3, t.length / 18)));
+    const strong = ["fuck","fucking","shit","hate","idiot","stupid","damn","hell","역겨","개같","씨발","병신","좆","짜증","싫어","지긋"];
+    strong.forEach(w => { if(t.includes(w)) score += 4; });
+    if(/[!?]{2,}/.test(t)) score += 3;
+    if(/[A-Z]{4,}/.test(text)) score += 2;
+    return Math.min(25, score);
+  }
+
+  function send(){
+    if(!current) return;
+    const text = $("message").value.trim();
+    if(!text) return;
+    const delta = intensity(text);
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+    $("history").prepend(bubble);
+    $("message").value = "";
+    current.stress = Math.min(100,current.stress + delta);
+    updateVisual();
+
+    if(current.stress >= 100){
+      setTimeout(() => {
+        $("heroAvatar").classList.add("pop");
+        setTimeout(() => show("done"), 520);
+      }, 180);
+    }
+    renderPeople();
+  }
+
+  $("sendBtn").addEventListener("click", send);
+  $("message").addEventListener("keydown", e => {
+    if((e.metaKey || e.ctrlKey) && e.key === "Enter") send();
+  });
+  $("clearBtn").addEventListener("click", () => $("message").value = "");
+  $("backHome").addEventListener("click", () => { renderPeople(); show("home"); });
+  $("resetBtn").addEventListener("click", () => {
+    if(current){ current.stress = 0; $("history").innerHTML=""; updateVisual(); }
+  });
+
+  $("replay").addEventListener("click", () => {
+    if(current){ current.stress = 0; $("history").innerHTML=""; updateVisual(); show("vent"); }
+  });
+  $("letGo").addEventListener("click", () => {
+    if(current){ current.stress = 0; $("history").innerHTML=""; updateVisual(); }
+    renderPeople(); show("home");
+  });
+
+  $("closeModal").addEventListener("click", () => $("modal").classList.remove("open"));
+  $("avatarBtn").addEventListener("click", () => {
+    const options = ["😐","👔","🧑‍💼","😎","🙂","😤"];
+    generatedEmoji = options[Math.floor(Math.random()*options.length)];
+    photoData = null;
+    $("avatarPreview").textContent = generatedEmoji;
+  });
+
+  $("photoInput").addEventListener("change", e => {
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      photoData = reader.result;
+      $("avatarPreview").innerHTML = `<img src="${photoData}" alt="Preview" style="width:82px;height:82px;border-radius:50%;object-fit:cover">`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $("createPerson").addEventListener("click", () => {
+    const name = $("nameInput").value.trim() || "Someone";
+    people.push({id:Date.now(),name,emoji:photoData ? "😐" : generatedEmoji,photo:photoData,stress:0});
+    $("nameInput").value = ""; photoData = null; generatedEmoji = "😐";
+    $("avatarPreview").textContent = "😐";
+    $("photoInput").value = "";
+    $("modal").classList.remove("open");
+    renderPeople();
+  });
+
+  $("speakBtn").addEventListener("click", () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SpeechRecognition){
+      $("voiceStatus").textContent = "Voice input isn't supported in this browser. Use text for the MVP demo.";
+      return;
+    }
+    const rec = new SpeechRecognition();
+    rec.lang = "en-US";
+    rec.interimResults = true;
+    rec.continuous = false;
+    $("voiceStatus").textContent = "Listening… say what you really want to say.";
+    rec.onresult = e => {
+      let transcript = "";
+      for(let i=0;i<e.results.length;i++) transcript += e.results[i][0].transcript;
+      $("message").value = transcript;
+    };
+    rec.onerror = () => $("voiceStatus").textContent = "Voice input stopped. You can type instead.";
+    rec.onend = () => $("voiceStatus").textContent = "";
+    rec.start();
+  });
+
+  renderPeople();
+})();
+</script>
+</body>
+</html>
