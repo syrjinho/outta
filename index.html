@@ -333,10 +333,10 @@
     if(!response.ok){
       throw new Error(result.error || `Avatar generation failed (${response.status})`);
     }
-    if(!result.image){
-      throw new Error("The AI did not return an avatar image.");
+    if(!result.imageDataUrl){
+      throw new Error(result.error || "The AI did not return an avatar image.");
     }
-    return result.image;
+    return result.imageDataUrl;
   }
 
   $("avatarBtn").addEventListener("click", async () => {
