@@ -156,7 +156,7 @@
     </div>
     <button class="primary" id="createPerson" style="margin-top:10px">Create</button>
     <button class="back" id="closeModal" style="width:100%;margin-top:8px">Cancel</button>
-    <div class="ai-note">MVP: the 2D avatar is generated in your browser from the uploaded photo. The next backend step can replace this with a true generative AI avatar while keeping the same UI.</div>
+    <div class="ai-note">Your photo is sent securely to the OUTTA AI backend and converted into a 2D avatar. Your OpenAI API key stays on the server.</div>
   </div>
 </div>
 
@@ -315,41 +315,28 @@
   });
 
   $("closeModal").addEventListener("click", () => $("modal").classList.remove("open"));
-  function make2DAvatar(dataUrl){
-    return new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        const size = 512;
-        const c = document.createElement("canvas");
-        c.width = size; c.height = size;
-        const ctx = c.getContext("2d");
-        const scale = Math.max(size / img.width, size / img.height);
-        const w = img.width * scale, h = img.height * scale;
-        const x = (size - w) / 2, y = (size - h) / 2;
+  const API_BASE = "https://outta-api.onrender.com";
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(size/2,size/2,size/2-5,0,Math.PI*2);
-        ctx.clip();
-        ctx.drawImage(img,x,y,w,h);
+  async function make2DAvatar(dataUrl){
+    const blob = await (await fetch(dataUrl)).blob();
+    const form = new FormData();
+    form.append("photo", blob, "outta-photo.jpg");
 
-        const image = ctx.getImageData(0,0,size,size);
-        const d = image.data;
-        for(let i=0;i<d.length;i+=4){
-          d[i]   = Math.round(d[i]/32)*32;
-          d[i+1] = Math.round(d[i+1]/32)*32;
-          d[i+2] = Math.round(d[i+2]/32)*32;
-        }
-        ctx.putImageData(image,0,0);
-        ctx.globalCompositeOperation = "source-over";
-        ctx.strokeStyle = "rgba(255,255,255,.45)";
-        ctx.lineWidth = 6;
-        ctx.stroke();
-        ctx.restore();
-        resolve(c.toDataURL("image/jpeg",0.88));
-      };
-      img.src = dataUrl;
+    const response = await fetch(`${API_BASE}/api/generate-avatar`, {
+      method: "POST",
+      body: form
     });
+
+    let result = {};
+    try { result = await response.json(); } catch (_) {}
+
+    if(!response.ok){
+      throw new Error(result.error || `Avatar generation failed (${response.status})`);
+    }
+    if(!result.image){
+      throw new Error("The AI did not return an avatar image.");
+    }
+    return result.image;
   }
 
   $("avatarBtn").addEventListener("click", async () => {
@@ -358,10 +345,27 @@
       $("avatarPreview").title = "Add a photo first";
       return;
     }
-    $("avatarBtn").textContent = "✨ Creating…";
-    avatarData = await make2DAvatar(photoData);
-    $("avatarPreview").innerHTML = `<img src="${avatarData}" alt="2D Avatar">`;
-    $("avatarBtn").textContent = "✓ 2D Avatar Ready";
+
+    const btn = $("avatarBtn");
+    btn.disabled = true;
+    btn.textContent = "✨ Creating AI Avatar…";
+    $("avatarPreview").classList.add("loading");
+
+    try {
+      avatarData = await make2DAvatar(photoData);
+      $("avatarPreview").innerHTML = `<img src="${avatarData}" alt="AI 2D Avatar">`;
+      btn.textContent = "✓ AI Avatar Ready";
+    } catch(err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = "✨ Create 2D Avatar";
+      $("avatarPreview").innerHTML = `<div style="padding:14px;text-align:center;color:#ff9aa5;font-size:12px;line-height:1.4">Couldn’t create the AI avatar.<br>${err.message}</div>`;
+      return;
+    } finally {
+      $("avatarPreview").classList.remove("loading");
+    }
+
+    btn.disabled = false;
   });
 
   $("photoInput").addEventListener("change", e => {
