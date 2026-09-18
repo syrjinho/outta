@@ -13,6 +13,7 @@ const upload = multer({
 const PORT = process.env.PORT || 10000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://outta.onrender.com';
 const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2';
+const OPENAI_EXPRESSION_MODEL = process.env.OPENAI_EXPRESSION_MODEL || 'gpt-image-2.5-flare';
 
 app.use(cors({
   origin: [FRONTEND_URL, 'https://outta.onrender.com'],
@@ -71,6 +72,67 @@ app.post('/api/generate-avatar', upload.single('photo'), async (req, res) => {
   }
 });
 
+app.post('/api/preload-expressions', upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No avatar image was uploaded.' });
+
+    const requested = String(req.body.expressions || 'annoyed,angry,furious')
+      .split(',').map(s => s.trim()).filter(Boolean);
+    const allowed = new Set(['annoyed', 'angry', 'furious']);
+    const expressions = requested.filter(x => allowed.has(x));
+    if (!expressions.length) return res.status(400).json({ error: 'No supported expressions requested.' });
+
+    const client = getClient();
+    const expressionText = {
+      annoyed: 'clearly annoyed, narrowed eyes and visibly irritated expression',
+      angry: 'angry, tense eyebrows and jaw, visibly upset but still natural and non-threatening',
+      furious: 'very angry and overwhelmed, intense eyes, strongly furrowed brows, clenched expression, still a clean stylized illustration'
+    };
+
+    const jobs = expressions.map(async (expression) => {
+      const image = await toFile(
+        req.file.buffer,
+        req.file.originalname || 'avatar.png',
+        { type: req.file.mimetype || 'image/png' }
+      );
+      const response = await client.images.edit({
+        model: OPENAI_EXPRESSION_MODEL,
+        image,
+        prompt: [
+          'Edit this existing OUTTA character avatar only by changing the facial expression.',
+          `Make the expression: ${expressionText[expression]}.`,
+          'Preserve the exact same character identity, face shape, hairstyle, skin tone, clothing, framing, illustration style, lighting, and background.',
+          'Do not redesign the character. Do not change age, gender, hairstyle, clothes, camera angle, or composition.',
+          'The result must look like the same person in the same avatar at a different emotional state.'
+        ].join(' '),
+        size: '1024x1024',
+        quality: 'low',
+        output_format: 'png'
+      });
+      const imageDataUrl = imageDataUrlFromResponse(response);
+      if (!imageDataUrl) throw new Error(`OpenAI did not return the ${expression} expression image.`);
+      return [expression, imageDataUrl];
+    });
+
+    const results = await Promise.allSettled(jobs);
+    const output = {};
+    const errors = [];
+    results.forEach((result, i) => {
+      const expression = expressions[i];
+      if (result.status === 'fulfilled') output[result.value[0]] = result.value[1];
+      else errors.push(`${expression}: ${result.reason?.message || 'failed'}`);
+    });
+
+    if (!Object.keys(output).length) {
+      return res.status(502).json({ error: errors.join('; ') || 'No expressions were generated.' });
+    }
+    res.json({ expressions: output, warnings: errors });
+  } catch (error) {
+    console.error('preload-expressions error:', error);
+    res.status(500).json({ error: error?.message || 'Expression preload failed.' });
+  }
+});
+
 app.post('/api/generate-expression', upload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No avatar image was uploaded.' });
@@ -101,7 +163,7 @@ app.post('/api/generate-expression', upload.single('avatar'), async (req, res) =
     }[expression];
 
     const response = await client.images.edit({
-      model: OPENAI_IMAGE_MODEL,
+      model: OPENAI_EXPRESSION_MODEL,
       image,
       prompt: [
         'Edit this existing OUTTA character avatar only by changing the facial expression.',
@@ -111,7 +173,7 @@ app.post('/api/generate-expression', upload.single('avatar'), async (req, res) =
         'The result must look like the same person in the same avatar at a different emotional state.'
       ].join(' '),
       size: '1024x1024',
-      quality: 'medium',
+      quality: 'low',
       output_format: 'png'
     });
 
