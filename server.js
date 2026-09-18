@@ -54,7 +54,6 @@ app.post('/api/generate-avatar', upload.single('photo'), async (req, res) => {
         'Make it a modern premium digital illustration for a mobile app, head-and-shoulders composition, clean simple background, expressive but natural face, no text, no logos.',
         'This is the base neutral/calm version of the character. Keep the identity consistent because this same character will later be shown with different facial expressions.'
       ].join(' '),
-      input_fidelity: 'high',
       size: '1024x1024',
       quality: 'medium',
       output_format: 'png'
@@ -111,7 +110,6 @@ app.post('/api/generate-expression', upload.single('avatar'), async (req, res) =
         'Do not redesign the character. Do not change age, gender, hairstyle, clothes, camera angle, or composition.',
         'The result must look like the same person in the same avatar at a different emotional state.'
       ].join(' '),
-      input_fidelity: 'high',
       size: '1024x1024',
       quality: 'medium',
       output_format: 'png'
