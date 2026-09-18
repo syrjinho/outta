@@ -52,11 +52,13 @@ app.post('/api/generate-avatar', upload.single('photo'), async (req, res) => {
       prompt: [
         'Create a polished 2D character avatar based on the person in the reference photo.',
         'Preserve the person’s recognizable facial characteristics, hairstyle, approximate age, skin tone, and overall appearance.',
-        'Make it a modern premium digital illustration for a mobile app, head-and-shoulders composition, clean simple background, expressive but natural face, no text, no logos.',
-        'This is the base neutral/calm version of the character. Keep the identity consistent because this same character will later be shown with different facial expressions.'
+        'Make it a modern premium 2D digital character cutout for a mobile app, head-and-shoulders composition, natural expressive face, no text, no logos.',
+        'Isolate the character completely on a fully transparent background. Show only the person/avatar with clean alpha edges. No scenery, no room, no backdrop, no solid color, no circle, no frame, no shadow.',
+        'This is the base neutral/calm version of the character. Keep the identity consistent because this same character will later be shown with different facial expressions. Preserve the transparent background.'
       ].join(' '),
       size: '1024x1024',
       quality: 'medium',
+      background: 'transparent',
       output_format: 'png'
     });
 
@@ -101,12 +103,13 @@ app.post('/api/preload-expressions', upload.single('avatar'), async (req, res) =
         prompt: [
           'Edit this existing OUTTA character avatar only by changing the facial expression.',
           `Make the expression: ${expressionText[expression]}.`,
-          'Preserve the exact same character identity, face shape, hairstyle, skin tone, clothing, framing, illustration style, lighting, and background.',
+          'Preserve the exact same character identity, face shape, hairstyle, skin tone, clothing, framing, and illustration style. Preserve the fully transparent background and clean alpha edges.',
           'Do not redesign the character. Do not change age, gender, hairstyle, clothes, camera angle, or composition.',
           'The result must look like the same person in the same avatar at a different emotional state.'
         ].join(' '),
         size: '1024x1024',
         quality: 'low',
+        background: 'transparent',
         output_format: 'png'
       });
       const imageDataUrl = imageDataUrlFromResponse(response);
@@ -168,12 +171,13 @@ app.post('/api/generate-expression', upload.single('avatar'), async (req, res) =
       prompt: [
         'Edit this existing OUTTA character avatar only by changing the facial expression.',
         `Make the expression: ${expressionText}.`,
-        'Preserve the exact same character identity, face shape, hairstyle, skin tone, clothing, framing, illustration style, lighting, and background.',
+        'Preserve the exact same character identity, face shape, hairstyle, skin tone, clothing, framing, and illustration style. Preserve the fully transparent background and clean alpha edges.',
         'Do not redesign the character. Do not change age, gender, hairstyle, clothes, camera angle, or composition.',
         'The result must look like the same person in the same avatar at a different emotional state.'
       ].join(' '),
       size: '1024x1024',
       quality: 'low',
+      background: 'transparent',
       output_format: 'png'
     });
 

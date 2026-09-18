@@ -33,8 +33,32 @@
   .back{border:0;background:none;color:var(--muted);padding:8px 0}
   .title{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:8px 0}
   .center{text-align:center}
-  .hero-avatar{width:180px;height:180px;border-radius:50%;margin:18px auto 14px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 35% 25%,#777d8c,#252a35 62%,#11141a);font-size:90px;transition:transform .25s ease,filter .25s ease}
-  .hero-avatar img{width:100%;height:100%;object-fit:cover}.hero-avatar.expression-loading img{filter:saturate(.55) blur(1px);opacity:.72}.expression-status{min-height:18px;color:var(--muted);font-size:11px;margin-top:2px}
+  .hero-avatar{width:300px;height:330px;border-radius:0;margin:10px auto 4px;display:flex;align-items:flex-end;justify-content:center;overflow:visible;background:transparent;font-size:120px;position:relative;transition:transform .18s ease,filter .18s ease,box-shadow .18s ease}
+  .hero-avatar img{width:100%;height:100%;object-fit:contain;display:block}.hero-avatar.expression-loading img{filter:saturate(.55) blur(1px);opacity:.72}.expression-status{min-height:18px;color:var(--muted);font-size:11px;margin-top:2px}
+  .emotion-overlay{display:none}
+  .pop-overlay{position:absolute;inset:-90px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:20;opacity:0}
+  .pop-overlay .pop-word{font-size:54px;font-weight:950;letter-spacing:-3px;color:#fff;text-shadow:0 5px 0 #111,0 0 28px rgba(255,107,122,.75);transform:scale(.2) rotate(-12deg)}
+  .hero-avatar.pop .pop-overlay{opacity:1;animation:popOverlay .9s ease-out forwards}
+  .hero-avatar.pop .pop-word{animation:popWord .72s cubic-bezier(.15,.85,.2,1) forwards}
+  @keyframes popOverlay{0%{opacity:0}18%{opacity:1}60%{opacity:1}100%{opacity:0}}
+  @keyframes popWord{0%{transform:scale(.2) rotate(-12deg)}30%{transform:scale(1.25) rotate(5deg)}55%{transform:scale(1) rotate(-2deg)}100%{transform:scale(1.35) rotate(6deg);opacity:0}}
+  .stress-particles{position:absolute;inset:-22px;pointer-events:none;z-index:4;opacity:0}
+  .stress-particles span{position:absolute;width:7px;height:7px;border-radius:50%;background:#ff6b7a;box-shadow:0 0 12px #ff6b7a;opacity:0}
+  .stress-particles span:nth-child(1){left:10%;top:50%}.stress-particles span:nth-child(2){left:86%;top:32%}.stress-particles span:nth-child(3){left:20%;top:12%}.stress-particles span:nth-child(4){left:78%;top:78%}.stress-particles span:nth-child(5){left:48%;top:3%}
+  .hero-avatar.transfer-burst .stress-particles{opacity:1}
+  .hero-avatar.transfer-burst .stress-particles span{animation:particleBurst .55s ease-out forwards}
+  .hero-avatar.transfer-burst .stress-particles span:nth-child(2){animation-delay:.04s}.hero-avatar.transfer-burst .stress-particles span:nth-child(3){animation-delay:.08s}.hero-avatar.transfer-burst .stress-particles span:nth-child(4){animation-delay:.12s}.hero-avatar.transfer-burst .stress-particles span:nth-child(5){animation-delay:.16s}
+  @keyframes particleBurst{0%{opacity:0;transform:scale(.2)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx,0),var(--dy,0)) scale(1.8)}}
+  .hero-avatar.overload{animation:overload .9s ease-in-out infinite}
+  @keyframes overload{0%,100%{transform:scale(1.05) rotate(-2deg)}25%{transform:scale(1.11) rotate(2deg)}50%{transform:scale(1.06) rotate(-3deg)}75%{transform:scale(1.12) rotate(3deg)}}
+  .pop-burst{position:absolute;inset:-80px;z-index:8;pointer-events:none;opacity:0}
+  .pop-burst i{position:absolute;width:15px;height:15px;border-radius:3px;background:#ff6b7a;box-shadow:0 0 18px rgba(255,107,122,.7)}
+  .pop-burst i:nth-child(1){left:50%;top:0}.pop-burst i:nth-child(2){right:2%;top:25%}.pop-burst i:nth-child(3){right:15%;bottom:4%}.pop-burst i:nth-child(4){left:5%;bottom:18%}.pop-burst i:nth-child(5){left:0;top:28%}.pop-burst i:nth-child(6){left:32%;bottom:0}
+  .hero-avatar.pop{animation:popAvatar .72s cubic-bezier(.2,.8,.2,1) forwards!important}
+  .hero-avatar.pop .pop-burst{opacity:1;animation:burst .72s ease-out forwards}
+  @keyframes popAvatar{0%{transform:scale(1.05);filter:saturate(1.1)}35%{transform:scale(1.18) rotate(-4deg);filter:saturate(1.6) brightness(1.08)}55%{transform:scale(1.28) rotate(4deg)}72%{transform:scale(1.04)}100%{transform:scale(.02);opacity:0}}
+  @keyframes burst{0%{transform:scale(.2);opacity:0}25%{opacity:1}100%{transform:scale(1.8) rotate(90deg);opacity:0}}
+
   .stress-row{display:flex;justify-content:space-between;align-items:center;margin:16px 0 7px}
   .stress-label{font-size:13px;color:var(--muted)}
   .stress-number{font-size:18px;font-weight:850}
@@ -90,6 +114,7 @@
   @keyframes angryPulse{from{transform:scale(1.055) rotate(-1deg)}to{transform:scale(1.075) rotate(1deg)}}
   @keyframes furiousShake{0%{transform:scale(1.09) translateX(-2px) rotate(-2deg)}50%{transform:scale(1.105) translateX(2px) rotate(2deg)}100%{transform:scale(1.09) translateX(-1px) rotate(-1deg)}}
   .hero-avatar.stress-uncomfortable::after,.hero-avatar.stress-annoyed::after,.hero-avatar.stress-angry::after,.hero-avatar.stress-furious::after{content:'';position:absolute;inset:-10px;border-radius:50%;pointer-events:none;}
+  @media (max-width:420px){.hero-avatar{width:270px;height:300px}}
   @media (min-width:700px){.app{padding-top:32px}}
 </style>
 </head>
@@ -112,7 +137,7 @@
       <button class="icon-btn" id="resetBtn" aria-label="Reset session">↻</button>
     </div>
     <div class="center">
-      <div id="heroAvatar" class="hero-avatar" aria-label="Avatar">😐</div>
+      <div id="heroAvatar" class="hero-avatar" aria-label="Avatar">😐<span class="pop-overlay"><span class="pop-word">POP!</span></span></div>
       <div class="title" id="personName">My Boss</div>
       <div class="stress-panels">
         <div class="stress-card user">
@@ -183,10 +208,11 @@
   let expressionRequestId = 0;
   let pendingExpressions = {};
   let pendingExpressionPromise = null;
+  let isPopping = false;
 
   const faceStates = [
     [0,"😐","Calm"], [20,"😕","Uncomfortable"], [40,"😒","Annoyed"],
-    [60,"😠","Angry"], [80,"😡","Furious"], [100,"😣","Overloaded"]
+    [60,"😠","Angry"], [80,"🤬","Furious"], [100,"😵","Overloaded"]
   ];
 
   function show(name){
@@ -219,6 +245,7 @@
     current = people.find(p => p.id === id);
     if(!current) return;
     sessionUserStress = 100;
+    isPopping = false;
     $("personName").textContent = current.name;
     $("personHeader").textContent = current.name.toUpperCase();
     $("targetStressLabel").textContent = current.name + "'s Stress";
@@ -248,20 +275,20 @@
     const avatar = $("heroAvatar");
     avatar.classList.remove("pop","stress-uncomfortable","stress-annoyed","stress-angry","stress-furious");
     if(src){
-      avatar.innerHTML = `<img src="${src}" alt="${current?.name || 'Avatar'}">`;
+      avatar.innerHTML = `<img src="${src}" alt="${current?.name || 'Avatar'}"><span class="stress-particles"><span></span><span></span><span></span><span></span><span></span></span><span class="pop-burst"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="pop-overlay"><span class="pop-word">POP!</span></span>`;
     } else {
-      avatar.textContent = getFaceState(current?.stress || 0)[1];
+      avatar.innerHTML = `<span style="position:relative;z-index:2">${getFaceState(current?.stress || 0)[1]}</span><span class="stress-particles"><span></span><span></span><span></span><span></span><span></span></span><span class="pop-burst"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="pop-overlay"><span class="pop-word">POP!</span></span>`;
     }
     avatar.dataset.expression = key || "calm";
   }
 
   function visualStressEffect(key){
     const avatar = $("heroAvatar");
-    avatar.classList.remove("stress-uncomfortable","stress-annoyed","stress-angry","stress-furious");
+    avatar.classList.remove("stress-uncomfortable","stress-annoyed","stress-angry","stress-furious","emotion-annoyed","emotion-angry","emotion-furious","overload");
     if(key === "uncomfortable") avatar.classList.add("stress-uncomfortable");
-    if(key === "annoyed") avatar.classList.add("stress-annoyed");
-    if(key === "angry") avatar.classList.add("stress-angry");
-    if(key === "furious") avatar.classList.add("stress-furious");
+    if(key === "annoyed") avatar.classList.add("stress-annoyed","emotion-annoyed");
+    if(key === "angry") avatar.classList.add("stress-angry","emotion-angry");
+    if(key === "furious") avatar.classList.add("stress-furious","emotion-furious","overload");
   }
 
   function applyExpression(key){
@@ -269,6 +296,7 @@
     const cached = current.expressions?.[key];
     if(cached){
       setAvatarImage(cached, key);
+      visualStressEffect(key);
     } else if(current.avatar){
       setAvatarImage(current.avatar, "calm");
       visualStressEffect(key);
@@ -312,6 +340,8 @@
     const key = getExpressionKey(s);
     $("faceLabel").textContent = state[2];
 
+    if(isPopping) return;
+
     if(current.avatar){
       applyExpression(key);
     } else if(current.photo) {
@@ -341,6 +371,22 @@
     return Math.min(30, score);
   }
 
+  function triggerPop(){
+    if(isPopping) return;
+    isPopping = true;
+    const hero = $("heroAvatar");
+    hero.classList.remove("transfer-burst","stress-uncomfortable","stress-annoyed","stress-angry","stress-furious","emotion-annoyed","emotion-angry","emotion-furious","overload");
+    void hero.offsetWidth;
+    hero.classList.add("pop");
+    $("faceLabel").textContent = "POP!";
+    $("expressionStatus").textContent = "You got it out.";
+    $("transferNote").textContent = "All that stress is out of your head.";
+    setTimeout(() => {
+      hero.innerHTML = "";
+      show("done");
+    }, 950);
+  }
+
   function send(){
     if(!current) return;
     const text = $("message").value.trim();
@@ -368,12 +414,14 @@
     arrow.classList.add("active");
 
     updateVisual();
+    const hero = $("heroAvatar");
+    hero.classList.remove("transfer-burst");
+    void hero.offsetWidth;
+    hero.classList.add("transfer-burst");
+    setTimeout(() => hero.classList.remove("transfer-burst"), 650);
 
     if(current.stress >= 100){
-      setTimeout(() => {
-        $("heroAvatar").classList.add("pop");
-        setTimeout(() => show("done"), 520);
-      }, 180);
+      triggerPop();
     }
     renderPeople();
   }
@@ -385,14 +433,14 @@
   $("clearBtn").addEventListener("click", () => $("message").value = "");
   $("backHome").addEventListener("click", () => { renderPeople(); show("home"); });
   $("resetBtn").addEventListener("click", () => {
-    if(current){ current.stress = 0; sessionUserStress = 100; $("history").innerHTML=""; updateVisual(); }
+    if(current){ isPopping = false; current.stress = 0; sessionUserStress = 100; $("history").innerHTML=""; updateVisual(); }
   });
 
   $("replay").addEventListener("click", () => {
-    if(current){ current.stress = 0; sessionUserStress = 100; $("history").innerHTML=""; updateVisual(); show("vent"); }
+    if(current){ isPopping = false; current.stress = 0; sessionUserStress = 100; $("history").innerHTML=""; updateVisual(); show("vent"); }
   });
   $("letGo").addEventListener("click", () => {
-    if(current){ current.stress = 0; sessionUserStress = 100; $("history").innerHTML=""; updateVisual(); }
+    if(current){ isPopping = false; current.stress = 0; sessionUserStress = 100; $("history").innerHTML=""; updateVisual(); }
     renderPeople(); show("home");
   });
 
