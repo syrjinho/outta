@@ -82,6 +82,10 @@
   .photo-preview{width:92px;height:92px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(145deg,#555b6a,#222733);font-size:46px;border:2px solid #353b48}
   .photo-preview img{width:100%;height:100%;object-fit:cover}
   .ai-note{font-size:11px;color:var(--muted);line-height:1.4;margin-top:10px}
+  .hero-avatar.stress-uncomfortable{filter:saturate(.9) contrast(1.05);transform:scale(1.01);}
+  .hero-avatar.stress-annoyed{filter:saturate(1.12) contrast(1.08);transform:scale(1.015) rotate(-.4deg);}
+  .hero-avatar.stress-angry{filter:saturate(1.22) contrast(1.12);transform:scale(1.02) rotate(.5deg);}
+  .hero-avatar.stress-furious{filter:saturate(1.35) contrast(1.16);transform:scale(1.03) rotate(-.8deg);}
   @media (min-width:700px){.app{padding-top:32px}}
 </style>
 </head>
@@ -236,7 +240,7 @@
 
   function setAvatarImage(src, key){
     const avatar = $("heroAvatar");
-    avatar.classList.remove("pop");
+    avatar.classList.remove("pop","stress-uncomfortable","stress-annoyed","stress-angry","stress-furious");
     if(src){
       avatar.innerHTML = `<img src="${src}" alt="${current?.name || 'Avatar'}">`;
     } else {
@@ -245,40 +249,45 @@
     avatar.dataset.expression = key || "calm";
   }
 
-  async function generateExpressionForCurrent(key){
-    if(!current || !current.avatar || key === "calm") return;
-    if(current.expressions?.[key]){
-      setAvatarImage(current.expressions[key], key);
-      return;
-    }
-
-    const requestId = ++expressionRequestId;
+  function visualStressEffect(key){
     const avatar = $("heroAvatar");
-    avatar.classList.add("expression-loading");
-    $("expressionStatus").textContent = `✨ Creating ${key} expression…`;
+    avatar.classList.remove("stress-uncomfortable","stress-annoyed","stress-angry","stress-furious");
+    if(key === "uncomfortable") avatar.classList.add("stress-uncomfortable");
+    if(key === "annoyed") avatar.classList.add("stress-annoyed");
+    if(key === "angry") avatar.classList.add("stress-angry");
+    if(key === "furious") avatar.classList.add("stress-furious");
+  }
 
+  function applyExpression(key){
+    if(!current) return;
+    const cached = current.expressions?.[key];
+    if(cached){
+      setAvatarImage(cached, key);
+    } else if(current.avatar){
+      setAvatarImage(current.avatar, "calm");
+      visualStressEffect(key);
+    } else {
+      setAvatarImage(null, key);
+    }
+    $("expressionStatus").textContent = cached ? "" : (key === "calm" ? "" : "Expression readying in background…");
+  }
+
+  async function preloadExpressions(person, avatarDataUrl){
+    const keys = ["annoyed", "angry", "furious"];
     try {
-      const blob = await (await fetch(current.avatar)).blob();
+      const blob = await (await fetch(avatarDataUrl)).blob();
       const form = new FormData();
       form.append("avatar", blob, "outta-avatar.png");
-      form.append("expression", key);
-      const response = await fetch(`${API_BASE}/api/generate-expression`, { method:"POST", body:form });
-
+      form.append("expressions", keys.join(","));
+      const response = await fetch(`${API_BASE}/api/preload-expressions`, { method:"POST", body:form });
       let result = {};
       try { result = await response.json(); } catch (_) {}
-      if(!response.ok) throw new Error(result.error || `Expression generation failed (${response.status})`);
-      if(!result.imageDataUrl) throw new Error("The AI did not return the expression image.");
-      if(requestId !== expressionRequestId) return;
-
-      current.expressions = current.expressions || {};
-      current.expressions[key] = result.imageDataUrl;
-      setAvatarImage(result.imageDataUrl, key);
-      $("expressionStatus").textContent = "";
+      if(!response.ok) throw new Error(result.error || `Expression preload failed (${response.status})`);
+      person.expressions = { ...(person.expressions || {}), ...(result.expressions || {}) };
+      if(current === person) updateVisual();
     } catch(err) {
-      console.error(err);
-      if(requestId === expressionRequestId) $("expressionStatus").textContent = "Using a visual stress effect while the expression loads.";
-    } finally {
-      if(requestId === expressionRequestId) avatar.classList.remove("expression-loading");
+      console.warn("Expression preload failed:", err);
+      if(current === person) $("expressionStatus").textContent = "Using instant visual stress effects.";
     }
   }
 
@@ -296,15 +305,10 @@
     $("faceLabel").textContent = state[2];
 
     if(current.avatar){
-      const cached = current.expressions?.[key];
-      if(cached) setAvatarImage(cached, key);
-      else if(key === "calm") setAvatarImage(current.avatar, key);
-      else {
-        setAvatarImage(current.avatar, "calm");
-        generateExpressionForCurrent(key);
-      }
+      applyExpression(key);
     } else if(current.photo) {
       setAvatarImage(current.photo, key);
+      visualStressEffect(key);
     } else {
       setAvatarImage(null, key);
     }
@@ -319,12 +323,14 @@
   function intensity(text){
     const t = text.toLowerCase().trim();
     if(!t) return 0;
-    let score = Math.ceil(Math.min(20, Math.max(3, t.length / 18)));
+    // Faster catharsis: most statements move roughly 15–30 stress points.
+    // Voice and text both use this same function.
+    let score = Math.ceil(Math.min(24, Math.max(8, t.length / 12)));
     const strong = ["fuck","fucking","shit","hate","idiot","stupid","damn","hell","역겨","개같","씨발","병신","좆","짜증","싫어","지긋"];
-    strong.forEach(w => { if(t.includes(w)) score += 4; });
-    if(/[!?]{2,}/.test(t)) score += 3;
-    if(/[A-Z]{4,}/.test(text)) score += 2;
-    return Math.min(25, score);
+    strong.forEach(w => { if(t.includes(w)) score += 5; });
+    if(/[!?]{2,}/.test(t)) score += 4;
+    if(/[A-Z]{4,}/.test(text)) score += 3;
+    return Math.min(30, score);
   }
 
   function send(){
@@ -423,6 +429,7 @@
       avatarData = await make2DAvatar(photoData);
       $("avatarPreview").innerHTML = `<img src="${avatarData}" alt="AI 2D Avatar">`;
       btn.textContent = "✓ AI Avatar Ready";
+      $("avatarPreview").title = "Base avatar ready. Expression pack will prepare after Create.";
     } catch(err) {
       console.error(err);
       btn.disabled = false;
@@ -451,10 +458,12 @@
 
   $("createPerson").addEventListener("click", () => {
     const name = $("nameInput").value.trim() || "Someone";
-    people.push({
+    const newPerson = {
       id:Date.now(), name, emoji:"😐", photo:photoData,
       avatar:avatarData || photoData, expressions:{}, stress:0
-    });
+    };
+    people.push(newPerson);
+    if(avatarData) preloadExpressions(newPerson, avatarData);
     $("nameInput").value = "";
     photoData = null;
     avatarData = null;
